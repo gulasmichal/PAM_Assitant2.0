@@ -347,6 +347,69 @@
         }
 
         /* ========================================
+           COPYABLE FIELDS
+           ======================================== */
+        .copyable-field {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+
+        .copy-btn-small {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: transparent;
+            border: 1px solid #E5E5E5;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .copy-btn-small:hover {
+            background: #F0F1F2;
+            border-color: var(--sapBrandColor);
+        }
+
+        .copy-btn-small svg {
+            width: 14px;
+            height: 14px;
+            color: var(--sapContent_LabelColor);
+        }
+
+        .copy-btn-small:hover svg {
+            color: var(--sapBrandColor);
+        }
+
+        .copy-btn-small.copied {
+            background: rgba(16, 126, 62, 0.1);
+            border-color: var(--sapPositiveColor);
+        }
+
+        .copy-btn-small.copied svg {
+            color: var(--sapPositiveColor);
+        }
+
+        .contacts-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .contacts-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--sapContent_LabelColor);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* ========================================
            CODE BLOCK
            ======================================== */
         .code-card {
@@ -599,6 +662,15 @@
             <div id="contactsSection" class="hidden">
                 <h2 class="section-header">Customer Contacts</h2>
                 <div class="fiori-card">
+                    <div class="contacts-header">
+                        <span class="contacts-label">Email Addresses</span>
+                        <button class="copy-btn-small" id="copyContactsBtn" onclick="copyContacts()" title="Copy all contacts">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                        </button>
+                    </div>
                     <div class="fiori-contact-list" id="contactsList"></div>
                 </div>
             </div>
@@ -664,6 +736,8 @@
         // Global variables
         let currentQuery = '';
         let currentData = null;
+        let currentContacts = '';
+        let currentProductSpecialist = '';
 
         // File upload handling
         const uploadZone = document.getElementById('uploadZone');
@@ -779,8 +853,21 @@
                 statusBadge.innerHTML = `<span class="fiori-status fiori-status-warning">${monitoringType.replace('_', ' ')}</span>`;
             }
 
+            // Store product specialist for copy
+            currentProductSpecialist = info.productSpecialist || '';
+
             // Info grid
             const infoGrid = document.getElementById('infoGrid');
+            const psValue = info.productSpecialist || 'N/A';
+            const psCopyBtn = info.productSpecialist ? `
+                <button class="copy-btn-small" id="copyPsBtn" onclick="copyProductSpecialist()" title="Copy email">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                </button>
+            ` : '';
+            
             infoGrid.innerHTML = `
                 <div class="fiori-info-tile">
                     <div class="fiori-info-label">Realm</div>
@@ -788,7 +875,10 @@
                 </div>
                 <div class="fiori-info-tile">
                     <div class="fiori-info-label">Product Specialist</div>
-                    <div class="fiori-info-value">${info.productSpecialist || 'N/A'}</div>
+                    <div class="copyable-field">
+                        <span class="fiori-info-value">${psValue}</span>
+                        ${psCopyBtn}
+                    </div>
                 </div>
                 <div class="fiori-info-tile">
                     <div class="fiori-info-label">Data Center</div>
@@ -802,9 +892,11 @@
             if (info.customerContacts) {
                 contactsSection.classList.remove('hidden');
                 const contacts = info.customerContacts.split(',').map(c => c.trim());
+                currentContacts = contacts.join(', ');
                 contactsList.innerHTML = contacts.map(c => `<span class="fiori-contact-chip">${c}</span>`).join('');
             } else {
                 contactsSection.classList.add('hidden');
+                currentContacts = '';
             }
 
             // Get unique names
@@ -907,6 +999,39 @@ ORDER BY ApprovedDate DESC`;
                     `;
                 }, 2000);
             });
+        }
+
+        // Copy product specialist to clipboard
+        function copyProductSpecialist() {
+            if (!currentProductSpecialist) return;
+            navigator.clipboard.writeText(currentProductSpecialist).then(() => {
+                showCopySuccess('copyPsBtn');
+            });
+        }
+
+        // Copy contacts to clipboard
+        function copyContacts() {
+            if (!currentContacts) return;
+            navigator.clipboard.writeText(currentContacts).then(() => {
+                showCopySuccess('copyContactsBtn');
+            });
+        }
+
+        // Show copy success animation for small buttons
+        function showCopySuccess(btnId) {
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
+            btn.classList.add('copied');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            `;
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = originalHtml;
+            }, 1500);
         }
 
         // Render data table
