@@ -1031,7 +1031,6 @@
             // Email template section
             const emailSubject = document.getElementById('emailSubject');
             const emailBody = document.getElementById('emailBody');
-            const hasCustomerContacts = !!info.customerContacts;
             const emailTemplate = generateEmailTemplate(monitoringType, currentCustomerName, info.productSpecialist, hasCustomerContacts);
             currentEmailSubject = emailTemplate.subject;
             currentEmailBody = emailTemplate.body;
