@@ -737,7 +737,7 @@
                     <polyline points="9 15 12 12 15 15"/>
                 </svg>
                 <p class="upload-text">Click to upload or drag and drop</p>
-                <p class="upload-hint">Supports PO_Ordering, RC_Processing, CLID_Request_Error, PAY_Sending, CR_Sourcing_Confirming, Stuck_Process_Flow_Projects, and Req_Approved_No_PO Excel files</p>
+                <p class="upload-hint">Supports PO_Ordering, RC_Processing, CLID_Request_Error, PAY_Sending, CR_Sourcing_Confirming, Stuck_Process_Flow_Projects, Req_Approved_No_PO, and Appr_Sbmtd_No_ActAppr Excel files</p>
             </div>
         </div>
 
@@ -858,7 +858,7 @@
                 </svg>
             </div>
             <h2 class="empty-title">Upload Monitoring File</h2>
-            <p class="empty-text">Drag and drop an Excel file or click to browse.<br>Supports PO_Ordering, RC_Processing, CLID_Request_Error, PAY_Sending, CR_Sourcing_Confirming, Stuck_Process_Flow_Projects, and Req_Approved_No_PO reports.</p>
+            <p class="empty-text">Drag and drop an Excel file or click to browse.<br>Supports PO_Ordering, RC_Processing, CLID_Request_Error, PAY_Sending, CR_Sourcing_Confirming, Stuck_Process_Flow_Projects, Req_Approved_No_PO, and Appr_Sbmtd_No_ActAppr reports.</p>
         </div>
     </main>
 
@@ -950,6 +950,9 @@
                     } else if (sheetNames.includes('Req_Approved_No_PO')) {
                         mainData = XLSX.utils.sheet_to_json(workbook.Sheets['Req_Approved_No_PO']);
                         monitoringType = 'Req_Approved_No_PO';
+                    } else if (sheetNames.includes('Appr_Sbmtd_No_ActAppr')) {
+                        mainData = XLSX.utils.sheet_to_json(workbook.Sheets['Appr_Sbmtd_No_ActAppr']);
+                        monitoringType = 'Appr_Sbmtd_No_ActAppr';
                     } else {
                         // Find first non-Info sheet
                         for (const sheet of sheetNames) {
@@ -1019,6 +1022,8 @@
                 statusBadge.innerHTML = '<span class="fiori-status fiori-status-warning">Stuck Process Flow Projects</span>';
             } else if (monitoringType === 'Req_Approved_No_PO') {
                 statusBadge.innerHTML = '<span class="fiori-status fiori-status-warning">Req Approved No PO</span>';
+            } else if (monitoringType === 'Appr_Sbmtd_No_ActAppr') {
+                statusBadge.innerHTML = '<span class="fiori-status fiori-status-warning">Appr Sbmtd No ActAppr</span>';
             } else {
                 statusBadge.innerHTML = `<span class="fiori-status fiori-status-warning">${monitoringType.replace('_', ' ')}</span>`;
             }
@@ -1101,6 +1106,7 @@
                              monitoringType === 'CR_Sourcing_Confirming' ? 'CR' :
                              monitoringType === 'Stuck_Process_Flow_Projects' ? 'PFP' :
                              monitoringType === 'Req_Approved_No_PO' ? 'PR' :
+                             monitoringType === 'Appr_Sbmtd_No_ActAppr' ? 'APPR' :
                              monitoringType.substring(0, 3).toUpperCase();
             metricsGrid.innerHTML = `
                 <div class="fiori-numeric-tile">
@@ -1171,6 +1177,8 @@
                     return generateStuckProcessFlowProjectsEmail(customerName, firstName, hasCustomerContacts, isSingleRecord, singleUniqueName);
                 case 'Req_Approved_No_PO':
                     return generateReqApprovedNoPOEmail(customerName, firstName, hasCustomerContacts, isSingleRecord, singleUniqueName);
+                case 'Appr_Sbmtd_No_ActAppr':
+                    return generateApprSbmtdNoActApprEmail(customerName, firstName, hasCustomerContacts, isSingleRecord, singleUniqueName);
                 default:
                     return {
                         subject: formatSubject(`Proactive Monitoring - ${type.replace(/_/g, ' ')}`, customerName),
@@ -1466,6 +1474,61 @@ Please notify the customer about the occurrence. If they need additional assista
             
             return {
                 subject: formatSubject('Requisition in status Approved with no PO', customerName),
+                body: formatBody(bodyContent)
+            };
+        }
+
+        function generateApprSbmtdNoActApprEmail(customerName, firstName, hasCustomerContacts, isSingleRecord, uniqueName) {
+            let bodyContent;
+            
+            if (hasCustomerContacts) {
+                if (isSingleRecord) {
+                    // Email to customer contacts with one Approvable
+                    bodyContent = `Hello Team,
+
+our proactive monitoring queries identified ${uniqueName} in status Submitted without any active approvers in the Approval Flow.
+
+<Insert your investigation of the issue here>
+
+If you need additional assistance with the above occurrences, you are welcome to submit a support case with SAP Ariba.`;
+                } else {
+                    // Email to customer contacts with more Approvables
+                    bodyContent = `Hello Team,
+
+our proactive monitoring queries identified several Approvable Objects in status Submitted without any active approvers in the Approval Flow.
+
+You can find the list of the Approvables in the attached Excel file.
+
+<Insert your investigation of the issue here>
+
+If you need additional assistance with the above occurrences, you are welcome to submit a support case with SAP Ariba.`;
+                }
+            } else {
+                if (isSingleRecord) {
+                    // Email to PS with one Approvable
+                    bodyContent = `Hello ${firstName},
+
+our proactive monitoring queries identified ${uniqueName} in status Submitted without any active approvers in the Approval Flow.
+
+<Insert your investigation of the issue here>
+
+Please notify the customer about the occurrence. If they need additional assistance with the above occurrences, they are welcome to submit a support case with SAP Ariba.`;
+                } else {
+                    // Email to PS with more Approvables
+                    bodyContent = `Hello ${firstName},
+
+our proactive monitoring queries identified several Approvable Objects in status Submitted without any active approvers in the Approval Flow.
+
+You can find the list of the Approvables in the attached Excel file.
+
+<Insert your investigation of the issue here>
+
+Please notify the customer about the occurrence. If they need additional assistance with the above occurrences, they are welcome to submit a support case with SAP Ariba.`;
+                }
+            }
+            
+            return {
+                subject: formatSubject('Approvable object in status Submitted with no active', customerName),
                 body: formatBody(bodyContent)
             };
         }
