@@ -980,6 +980,26 @@
             });
         }
 
+        // Extract info from parsed file's info data
+        function extractInfoFromParsed(infoData) {
+            const info = { realm: '', customerName: '', productSpecialist: '', dataCenter: '', customerContacts: '' };
+            if (!infoData) return info;
+
+            for (const row of infoData) {
+                if (row.length >= 2) {
+                    const key = String(row[0] || '').trim();
+                    const value = String(row[1] || '').trim();
+                    
+                    if (key === 'Realm') info.realm = value;
+                    else if (key === 'Customer Account Name') info.customerName = value;
+                    else if (key === 'PSEE Consultant') info.productSpecialist = value;
+                    else if (key === 'Data Center') info.dataCenter = value;
+                    else if (key === 'Monitoring Contacts') info.customerContacts = value;
+                }
+            }
+            return info;
+        }
+
         // Process multiple Excel files
         async function processFiles(files) {
             try {
@@ -991,32 +1011,70 @@
                     return;
                 }
 
-                // Validate all files have the same monitoring type
-                const firstType = parsedFiles[0].monitoringType;
-                const mismatchedFiles = parsedFiles.filter(f => f.monitoringType !== firstType);
+                // Extract info from all files for validation
+                const filesWithInfo = parsedFiles.map(f => ({
+                    ...f,
+                    info: extractInfoFromParsed(f.infoData)
+                }));
+
+                // Get reference values from first file
+                const firstFile = filesWithInfo[0];
+                const refType = firstFile.monitoringType;
+                const refRealm = firstFile.info.realm;
+                const refCustomer = firstFile.info.customerName;
+
+                // Validate all files have identical monitoring type, realm, and customer
+                const validationErrors = [];
                 
-                if (mismatchedFiles.length > 0) {
-                    const mismatchedNames = mismatchedFiles.map(f => `${f.fileName} (${f.monitoringType})`).join('\n');
-                    alert(`All files must be of the same monitoring type!\n\nExpected: ${firstType}\nMismatched files:\n${mismatchedNames}`);
+                for (let i = 1; i < filesWithInfo.length; i++) {
+                    const file = filesWithInfo[i];
+                    const errors = [];
+                    
+                    if (file.monitoringType !== refType) {
+                        errors.push(`Monitoring Type: "${file.monitoringType}" (expected "${refType}")`);
+                    }
+                    if (file.info.realm !== refRealm) {
+                        errors.push(`Realm: "${file.info.realm}" (expected "${refRealm}")`);
+                    }
+                    if (file.info.customerName !== refCustomer) {
+                        errors.push(`Customer: "${file.info.customerName}" (expected "${refCustomer}")`);
+                    }
+                    
+                    if (errors.length > 0) {
+                        validationErrors.push({
+                            fileName: file.fileName,
+                            errors: errors
+                        });
+                    }
+                }
+
+                if (validationErrors.length > 0) {
+                    let errorMsg = `All files must have the same Monitoring Type, Realm, and Customer!\n\n`;
+                    errorMsg += `Reference file: ${firstFile.fileName}\n`;
+                    errorMsg += `• Monitoring Type: ${refType}\n`;
+                    errorMsg += `• Realm: ${refRealm || '(empty)'}\n`;
+                    errorMsg += `• Customer: ${refCustomer || '(empty)'}\n\n`;
+                    errorMsg += `Mismatched files:\n`;
+                    
+                    for (const err of validationErrors) {
+                        errorMsg += `\n${err.fileName}:\n`;
+                        err.errors.forEach(e => errorMsg += `  • ${e}\n`);
+                    }
+                    
+                    alert(errorMsg);
                     return;
                 }
 
                 // Combine data from all files
                 let combinedMainData = [];
-                let combinedInfoData = null;
+                let combinedInfoData = firstFile.infoData;
                 
                 for (const parsed of parsedFiles) {
-                    // Use first file's info data as the base (usually same customer/realm)
-                    if (!combinedInfoData && parsed.infoData) {
-                        combinedInfoData = parsed.infoData;
-                    }
-                    
-                    // Combine main data
                     combinedMainData = combinedMainData.concat(parsed.mainData);
                 }
 
                 // Remove duplicate records based on UniqueName or InternalId
-                const idField = firstType === 'Stuck_Process_Flow_Projects' ? 'InternalId' : 'UniqueName';
+                const idField = refType === 'Stuck_Process_Flow_Projects' ? 'InternalId' : 'UniqueName';
                 const seenIds = new Set();
                 const deduplicatedData = [];
                 
@@ -1033,7 +1091,7 @@
 
                 currentData = deduplicatedData;
                 currentFileCount = parsedFiles.length;
-                displayResults(firstType, combinedInfoData, deduplicatedData);
+                displayResults(refType, combinedInfoData, deduplicatedData);
 
             } catch (error) {
                 alert(error.message);
