@@ -904,6 +904,17 @@
             color: var(--sapBrandColor);
         }
 
+        .type-action-btn.danger {
+            color: var(--sapNegativeColor);
+            border-color: rgba(187, 0, 0, 0.3);
+        }
+
+        .type-action-btn.danger:hover {
+            background: rgba(187, 0, 0, 0.08);
+            border-color: var(--sapNegativeColor);
+            color: var(--sapNegativeColor);
+        }
+
         /* Config Info */
         .config-info {
             display: grid;
@@ -3042,6 +3053,7 @@ ORDER BY ApprovedDate DESC`;
                     </div>
                     <div class="type-item-actions">
                         <button class="type-action-btn" onclick="editType('${typeId}')">Edit</button>
+                        <button class="type-action-btn danger" onclick="removeType('${typeId}', event)">Remove</button>
                     </div>
                 `;
                 typeList.appendChild(item);
@@ -3093,6 +3105,36 @@ ORDER BY ApprovedDate DESC`;
             showTypeList();
             editingTypeId = null;
             isNewType = false;
+        }
+
+        function removeType(typeId, event) {
+            // Prevent the click from propagating to the parent item
+            if (event) {
+                event.stopPropagation();
+            }
+
+            const typeConfig = appConfig.monitoringTypes[typeId];
+            if (!typeConfig) {
+                alert('Type not found');
+                return;
+            }
+
+            const confirmMsg = `Are you sure you want to remove the monitoring type "${typeConfig.displayName}" (${typeId})?\n\nThis action cannot be undone.`;
+            
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            // Remove the type from config
+            delete appConfig.monitoringTypes[typeId];
+            appConfig.lastModified = new Date().toISOString().split('T')[0];
+
+            // Save to localStorage
+            saveConfigToLocalStorage();
+
+            // Update UI
+            populateSettingsModal();
+            updateSupportedTypesHint();
         }
 
         function saveTypeChanges() {
