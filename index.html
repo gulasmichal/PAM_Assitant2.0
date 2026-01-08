@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POM Assistant 2.0 | SAP Ariba</title>
+    <title>PAM Assistant 2.0 | SAP Ariba</title>
     <link rel="icon" type="image/png" href="sap-icon.png">
     
     <!-- SheetJS for Excel parsing (client-side) -->
@@ -1178,7 +1178,7 @@
         <div class="shell-logo">
             <img src="saplogo.png" alt="SAP" class="sap-logo">
         </div>
-        <span class="shell-title">POM Assistant 2.0</span>
+        <span class="shell-title">PAM Assistant 2.0</span>
         <div class="shell-user">
             <button class="shell-settings-btn" onclick="openSettings()" title="Settings">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1601,7 +1601,7 @@
         // CONFIGURATION MANAGEMENT
         // ========================================
         
-        const CONFIG_STORAGE_KEY = 'pom_assistant_config';
+        const CONFIG_STORAGE_KEY = 'pam_assistant_config';
         const CONFIG_URL = 'config.json';
         
         let appConfig = null;
@@ -3201,7 +3201,7 @@ ORDER BY ApprovedDate DESC`;
             
             const a = document.createElement('a');
             a.href = url;
-            a.download = `pom-assistant-config-${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `pam-assistant-config-${new Date().toISOString().split('T')[0]}.json`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
