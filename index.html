@@ -1552,7 +1552,7 @@
                 </div>
                 
                 <!-- Open in Outlook Button with Attachment -->
-                <button class="outlook-btn" id="openOutlookBtn" onclick="openInOutlook()" title="Downloads .eml file with Excel attachment - Open it to compose email in Outlook">
+                <button class="outlook-btn" id="openOutlookBtn" onclick="openInOutlook()" title="Opens email draft in Outlook with Excel attachment included">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                         <polyline points="22,6 12,13 2,6"/>
@@ -3019,7 +3019,31 @@ ORDER BY ApprovedDate DESC`;
             return eml;
         }
 
-        // Download EML file
+        // Open EML file directly (attempts to open in Outlook)
+        function openEmlFile(emlContent, filename) {
+            const blob = new Blob([emlContent], { type: 'message/rfc822' });
+            const url = URL.createObjectURL(blob);
+            
+            // Try to open the EML file directly - this will trigger the OS file handler
+            // On Windows with Outlook, this should open the email in Outlook
+            const newWindow = window.open(url, '_blank');
+            
+            // If popup was blocked or didn't open, fall back to download
+            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                // Fallback: trigger download
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+            
+            // Clean up blob URL after a delay (give time for Outlook to open)
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+        }
+
+        // Download EML file (for explicit download action)
         function downloadEml(emlContent, filename) {
             const blob = new Blob([emlContent], { type: 'message/rfc822' });
             const url = URL.createObjectURL(blob);
@@ -3072,8 +3096,8 @@ ORDER BY ApprovedDate DESC`;
                 .replace(/\s+/g, '_');
             const emlFilename = `${sanitizedSubject || 'PAM_Email'}.eml`;
             
-            // Download the EML file
-            downloadEml(emlContent, emlFilename);
+            // Try to open directly in Outlook
+            openEmlFile(emlContent, emlFilename);
         }
 
         // Show copy success animation for small buttons
