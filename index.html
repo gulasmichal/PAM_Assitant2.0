@@ -3964,8 +3964,11 @@ ORDER BY ApprovedDate DESC`;
             // Sort batches by start date descending (newest first)
             batches.sort((a, b) => b.start.getTime() - a.start.getTime());
             
-            // Format the output
-            const formatDateTime = (d) => d.toISOString().slice(0, 16).replace('T', ' ');
+            // Format the output (using local time to match AQL query format)
+            const formatDateTime = (d) => {
+                const pad = (n) => String(n).padStart(2, '0');
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            };
             
             let summary = `Batch summary (gap: ${batchGapHours}h):\n`;
             
