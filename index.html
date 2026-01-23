@@ -3658,10 +3658,10 @@ ORDER BY ApprovedDate DESC`;
             let sampleIntervals = []; // For query preview
             const intervalLabel = getIntervalLabel(interval);
             
-            // Format date for AQL: Date('YYYY-MM-DD HH:MM:SS PST')
+            // Format date for AQL: Date('YYYY-MM-DD HH:MM:SS PST') - using UTC to match Excel data
             const formatAQLDate = (d) => {
                 const pad = (n) => String(n).padStart(2, '0');
-                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} PST`;
+                return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())} PST`;
             };
             
             switch (interval) {
@@ -3964,11 +3964,8 @@ ORDER BY ApprovedDate DESC`;
             // Sort batches by start date descending (newest first)
             batches.sort((a, b) => b.start.getTime() - a.start.getTime());
             
-            // Format the output (using local time to match AQL query format)
-            const formatDateTime = (d) => {
-                const pad = (n) => String(n).padStart(2, '0');
-                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-            };
+            // Format the output (using UTC to match Excel data)
+            const formatDateTime = (d) => d.toISOString().slice(0, 16).replace('T', ' ');
             
             let summary = `Batch summary (gap: ${batchGapHours}h):\n`;
             
@@ -3991,10 +3988,10 @@ ORDER BY ApprovedDate DESC`;
                 return '';
             }
 
-            // Format date for AQL: Date('YYYY-MM-DD HH:MM:SS PST')
+            // Format date for AQL: Date('YYYY-MM-DD HH:MM:SS PST') - using UTC to match Excel data
             const formatAQLDate = (d) => {
                 const pad = (n) => String(n).padStart(2, '0');
-                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} PST`;
+                return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())} PST`;
             };
 
             let intervals = [];
