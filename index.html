@@ -1590,9 +1590,9 @@
                             </div>
                             <!-- Batch Gap Input (shown only when batch is selected) -->
                             <div class="editor-field batch-gap-field" id="batchGapField" style="display: none;">
-                                <label class="editor-label">Batch Gap (hours)</label>
-                                <input type="number" class="editor-input" id="editorBatchGap" placeholder="e.g., 1, 4, 24" min="0.1" step="0.5" value="1" oninput="updateDaySummaryPreview()">
-                                <span class="editor-hint">Records within this time gap are grouped together into one batch</span>
+                                <label class="editor-label">Batch Gap (minutes)</label>
+                                <input type="number" class="editor-input" id="editorBatchGap" placeholder="e.g., 10, 30, 60" min="1" step="1" value="10" oninput="updateDaySummaryPreview()">
+                                <span class="editor-hint">Records within this time gap are grouped together. Use {{gap}} in Summary Query.</span>
                             </div>
                             <div class="editor-field">
                                 <label class="editor-label">Date/Time Column Name</label>
@@ -1616,8 +1616,8 @@ Daily summary:
                             <!-- Summary Query Section -->
                             <div class="editor-field" style="grid-column: span 2; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px dashed rgba(0, 112, 242, 0.2);">
                                 <label class="editor-label">Summary Query (optional AQL condition)</label>
-                                <input type="text" class="editor-input" id="editorSummaryQuery" placeholder="e.g., Date('{{AQLdateStart}}')-StartRunDate>=0 AND Date('{{AQLdateEnd}}')-EndRunDate<=0" oninput="updateDaySummaryPreview()">
-                                <span class="editor-hint">AQL condition template with {{AQLdateStart}} and {{AQLdateEnd}} placeholders. Will be repeated for each interval and joined with OR. Result available as {{batchQuery}}</span>
+                                <input type="text" class="editor-input" id="editorSummaryQuery" placeholder="e.g., Date('{{AQLdateStart}}')-StartRunDate>=-(15+{{gap}}+1)/24/60 AND Date('{{AQLdateEnd}}')-EndRunDate<=(15+{{gap}})/24/60" oninput="updateDaySummaryPreview()">
+                                <span class="editor-hint">Placeholders: {{AQLdateStart}}, {{AQLdateEnd}}, {{gap}} (batch gap in minutes). Repeated for each interval, joined with OR. Result: {{batchQuery}}</span>
                             </div>
                             <div class="editor-field" style="grid-column: span 2;">
                                 <div class="day-summary-preview-title">Query Preview:</div>
@@ -3761,7 +3761,7 @@ ORDER BY ApprovedDate DESC`;
                     break;
                     
                 case 'batch':
-                    const batchGap = parseFloat(document.getElementById('editorBatchGap')?.value) || 1;
+                    const batchGap = parseFloat(document.getElementById('editorBatchGap')?.value) || 10;
                     // Format date-time ranges for batch preview
                     const formatDateTime = (d) => d.toISOString().slice(0, 16).replace('T', ' ');
                     const batch1Start = new Date(today - 2 * 3600000);
@@ -3770,7 +3770,7 @@ ORDER BY ApprovedDate DESC`;
                     const batch2End = new Date(today - 6 * 3600000);
                     const batch3Start = new Date(today - 26 * 3600000);
                     const batch3End = new Date(today - 24 * 3600000);
-                    previewText = `${intervalLabel} summary (gap: ${batchGap}h):\n`;
+                    previewText = `${intervalLabel} summary (gap: ${batchGap}min):\n`;
                     previewText += `${formatDateTime(batch1Start)} - ${formatDateTime(batch1End)} (5 ${description})\n`;
                     previewText += `${formatDateTime(batch2Start)} - ${formatDateTime(batch2End)} (3 ${description})\n`;
                     previewText += `${formatDateTime(batch3Start)} - ${formatDateTime(batch3End)} (2 ${description})`;
@@ -3794,10 +3794,12 @@ ORDER BY ApprovedDate DESC`;
                 } else if (sampleIntervals.length === 0) {
                     queryPreview.textContent = '(No intervals to generate query)';
                 } else {
+                    const currentBatchGap = parseFloat(document.getElementById('editorBatchGap')?.value) || 10;
                     const queryParts = sampleIntervals.map(interval => {
                         let condition = summaryQuery
                             .replace(/\{\{AQLdateStart\}\}/g, formatAQLDate(interval.start))
-                            .replace(/\{\{AQLdateEnd\}\}/g, formatAQLDate(interval.end));
+                            .replace(/\{\{AQLdateEnd\}\}/g, formatAQLDate(interval.end))
+                            .replace(/\{\{gap\}\}/g, currentBatchGap);
                         return `(${condition})`;
                     });
                     queryPreview.textContent = queryParts.join('\nOR\n');
@@ -3862,7 +3864,7 @@ ORDER BY ApprovedDate DESC`;
         }
 
         // Generate time-based summary from data (supports multiple intervals including batch)
-        function generateDayByDaySummary(data, dateColumn, objectDescription, interval = 'daily', batchGapHours = 1) {
+        function generateDayByDaySummary(data, dateColumn, objectDescription, interval = 'daily', batchGapMinutes = 10) {
             if (!data || data.length === 0 || !dateColumn) {
                 return '';
             }
@@ -3872,7 +3874,7 @@ ORDER BY ApprovedDate DESC`;
             
             // Special handling for batch mode
             if (interval === 'batch') {
-                return generateBatchSummary(data, dateColumn, description, batchGapHours);
+                return generateBatchSummary(data, dateColumn, description, batchGapMinutes);
             }
 
             // Group data by the selected interval
@@ -3911,7 +3913,7 @@ ORDER BY ApprovedDate DESC`;
         }
 
         // Generate batch-based summary by grouping records with time gaps
-        function generateBatchSummary(data, dateColumn, description, batchGapHours) {
+        function generateBatchSummary(data, dateColumn, description, batchGapMinutes) {
             // Parse all dates and filter out invalid ones
             const records = [];
             for (const row of data) {
@@ -3929,8 +3931,8 @@ ORDER BY ApprovedDate DESC`;
             // Sort records by date (oldest first for batch processing)
             records.sort((a, b) => a.date.getTime() - b.date.getTime());
             
-            // Convert batch gap from hours to milliseconds
-            const batchGapMs = batchGapHours * 3600 * 1000;
+            // Convert batch gap from minutes to milliseconds
+            const batchGapMs = batchGapMinutes * 60 * 1000;
             
             // Group into batches
             const batches = [];
@@ -3967,23 +3969,18 @@ ORDER BY ApprovedDate DESC`;
             // Format the output (using UTC to match Excel data)
             const formatDateTime = (d) => d.toISOString().slice(0, 16).replace('T', ' ');
             
-            let summary = `Batch summary (gap: ${batchGapHours}h):\n`;
+            let summary = `Batch summary (gap: ${batchGapMinutes}min):\n`;
             
             for (const batch of batches) {
-                if (batch.start.getTime() === batch.end.getTime()) {
-                    // Single record batch
-                    summary += `${formatDateTime(batch.start)} (${batch.count} ${description})\n`;
-                } else {
-                    // Multi-record batch with range
-                    summary += `${formatDateTime(batch.start)} - ${formatDateTime(batch.end)} (${batch.count} ${description})\n`;
-                }
+                // Always show both start and end for nice alignment
+                summary += `${formatDateTime(batch.start)} - ${formatDateTime(batch.end)} (${batch.count} ${description})\n`;
             }
             
             return summary.trim();
         }
 
         // Generate AQL query from time intervals
-        function generateBatchQuery(data, dateColumn, queryTemplate, interval = 'daily', batchGapHours = 1) {
+        function generateBatchQuery(data, dateColumn, queryTemplate, interval = 'daily', batchGapMinutes = 10) {
             if (!data || data.length === 0 || !dateColumn || !queryTemplate) {
                 return '';
             }
@@ -3998,7 +3995,7 @@ ORDER BY ApprovedDate DESC`;
 
             if (interval === 'batch') {
                 // Use batch logic - group by time gaps
-                intervals = getBatchIntervals(data, dateColumn, batchGapHours);
+                intervals = getBatchIntervals(data, dateColumn, batchGapMinutes);
             } else {
                 // Use fixed interval grouping (hourly, daily, weekly, monthly, yearly)
                 intervals = getFixedIntervals(data, dateColumn, interval);
@@ -4012,7 +4009,8 @@ ORDER BY ApprovedDate DESC`;
             const queryParts = intervals.map(int => {
                 let condition = queryTemplate
                     .replace(/\{\{AQLdateStart\}\}/g, formatAQLDate(int.start))
-                    .replace(/\{\{AQLdateEnd\}\}/g, formatAQLDate(int.end));
+                    .replace(/\{\{AQLdateEnd\}\}/g, formatAQLDate(int.end))
+                    .replace(/\{\{gap\}\}/g, batchGapMinutes);
                 return `(${condition})`;
             });
 
@@ -4020,7 +4018,7 @@ ORDER BY ApprovedDate DESC`;
         }
 
         // Get batch intervals from data based on time gaps
-        function getBatchIntervals(data, dateColumn, batchGapHours) {
+        function getBatchIntervals(data, dateColumn, batchGapMinutes) {
             const records = [];
             for (const row of data) {
                 const dateValue = row[dateColumn];
@@ -4034,7 +4032,7 @@ ORDER BY ApprovedDate DESC`;
             
             records.sort((a, b) => a.getTime() - b.getTime());
             
-            const batchGapMs = batchGapHours * 3600 * 1000;
+            const batchGapMs = batchGapMinutes * 60 * 1000;
             const batches = [];
             let currentBatch = { start: records[0], end: records[0] };
             
