@@ -3827,33 +3827,22 @@ ORDER BY ApprovedDate DESC`;
             if (!dateValue) return null;
             
             if (dateValue instanceof Date) {
-                // Normalize: treat local time components as UTC wall clock time
-                // This ensures formatting with toISOString()/getUTC*() preserves the original time
-                return new Date(Date.UTC(
-                    dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate(),
-                    dateValue.getHours(), dateValue.getMinutes(), dateValue.getSeconds()
-                ));
+                return dateValue;
             } else if (typeof dateValue === 'number') {
-                // Excel serial date number - already produces correct UTC wall clock time
+                // Excel serial date number
                 return new Date((dateValue - 25569) * 86400 * 1000);
             } else {
                 // Try to parse string date
                 const parsed = new Date(dateValue);
                 if (!isNaN(parsed.getTime())) {
-                    // new Date(string) parses as local time, so normalize to UTC wall clock
-                    return new Date(Date.UTC(
-                        parsed.getFullYear(), parsed.getMonth(), parsed.getDate(),
-                        parsed.getHours(), parsed.getMinutes(), parsed.getSeconds()
-                    ));
+                    return parsed;
                 } else {
                     // Try to extract date from string (e.g., "2026-01-15T10:30:00")
                     const match = String(dateValue).match(/(\d{4}[-/]\d{2}[-/]\d{2})(?:[T\s](\d{2}:\d{2}))?/);
                     if (match) {
                         const dateStr = match[1].replace(/\//g, '-');
                         const timeStr = match[2] || '00:00';
-                        const [year, month, day] = dateStr.split('-').map(Number);
-                        const [hours, minutes] = timeStr.split(':').map(Number);
-                        return new Date(Date.UTC(year, month - 1, day, hours, minutes, 0));
+                        return new Date(`${dateStr}T${timeStr}:00`);
                     }
                 }
             }
@@ -3870,19 +3859,19 @@ ORDER BY ApprovedDate DESC`;
                     return date.toISOString().split('T')[0];
                     
                 case 'weekly':
-                    // Get ISO week number using UTC methods
-                    const d = new Date(date.getTime());
-                    d.setUTCHours(0, 0, 0, 0);
-                    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-                    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+                    // Get ISO week number
+                    const d = new Date(date);
+                    d.setHours(0, 0, 0, 0);
+                    d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+                    const yearStart = new Date(d.getFullYear(), 0, 1);
                     const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-                    return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+                    return `${d.getFullYear()}-W${String(weekNo).padStart(2, '0')}`;
                     
                 case 'monthly':
                     return date.toISOString().slice(0, 7);
                     
                 case 'yearly':
-                    return String(date.getUTCFullYear());
+                    return String(date.getFullYear());
                     
                 default:
                     return date.toISOString().split('T')[0];
@@ -4115,26 +4104,26 @@ ORDER BY ApprovedDate DESC`;
                 
                 switch (interval) {
                     case 'hourly':
-                        start = new Date(Date.UTC(sampleDate.getUTCFullYear(), sampleDate.getUTCMonth(), sampleDate.getUTCDate(), sampleDate.getUTCHours(), 0, 0));
+                        start = new Date(sampleDate.getFullYear(), sampleDate.getMonth(), sampleDate.getDate(), sampleDate.getHours(), 0, 0);
                         end = new Date(start.getTime() + 3600000 - 1);
                         break;
                     case 'daily':
-                        start = new Date(Date.UTC(sampleDate.getUTCFullYear(), sampleDate.getUTCMonth(), sampleDate.getUTCDate(), 0, 0, 0));
+                        start = new Date(sampleDate.getFullYear(), sampleDate.getMonth(), sampleDate.getDate(), 0, 0, 0);
                         end = new Date(start.getTime() + 86400000 - 1);
                         break;
                     case 'weekly':
-                        const day = sampleDate.getUTCDay();
-                        const diff = sampleDate.getUTCDate() - day + (day === 0 ? -6 : 1);
-                        start = new Date(Date.UTC(sampleDate.getUTCFullYear(), sampleDate.getUTCMonth(), diff, 0, 0, 0));
+                        const day = sampleDate.getDay();
+                        const diff = sampleDate.getDate() - day + (day === 0 ? -6 : 1);
+                        start = new Date(sampleDate.getFullYear(), sampleDate.getMonth(), diff, 0, 0, 0);
                         end = new Date(start.getTime() + 7 * 86400000 - 1);
                         break;
                     case 'monthly':
-                        start = new Date(Date.UTC(sampleDate.getUTCFullYear(), sampleDate.getUTCMonth(), 1, 0, 0, 0));
-                        end = new Date(Date.UTC(sampleDate.getUTCFullYear(), sampleDate.getUTCMonth() + 1, 0, 23, 59, 59));
+                        start = new Date(sampleDate.getFullYear(), sampleDate.getMonth(), 1, 0, 0, 0);
+                        end = new Date(sampleDate.getFullYear(), sampleDate.getMonth() + 1, 0, 23, 59, 59);
                         break;
                     case 'yearly':
-                        start = new Date(Date.UTC(sampleDate.getUTCFullYear(), 0, 1, 0, 0, 0));
-                        end = new Date(Date.UTC(sampleDate.getUTCFullYear(), 11, 31, 23, 59, 59));
+                        start = new Date(sampleDate.getFullYear(), 0, 1, 0, 0, 0);
+                        end = new Date(sampleDate.getFullYear(), 11, 31, 23, 59, 59);
                         break;
                     default:
                         start = groups[key].min;
