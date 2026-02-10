@@ -1,7 +1,6 @@
 {
   "version": "1.0",
-  "lastModified": "2026-01-02",
-  
+  "lastModified": "2026-02-09",
   "monitoringTypes": {
     "PO_Ordering": {
       "displayName": "PO Ordering",
@@ -10,9 +9,7 @@
       "idField": "UniqueName",
       "typeLabel": "PO",
       "hasQuery": true,
-      
       "queryTemplate": "SELECT\nUniqueName \"PO ID Ariba\",\nOrderID \"Order ID SAP\",\nName \"PO Title\",\nStatusString \"Status\",\n\"Active\" \"Active\",\nTimeCreated,\nTimeUpdated,\nRecipients.OrderingMethod \"Ordering Method\",\nRecipients.State \"Recipient State\",\nRecipients.FailureReason \"Failure Reason\",\nRecipients.TimeCreated \"Recipient TimeCreated\",\nRecipients.TimeUpdated \"Recipient TimeUpdated\",\nSupplier.Name as \"Supplier Name\",\nSupplier.UniqueName as \"Supplier ID\",\nSupplierLocation.PreferredOrderingMethod as SupplierOrderingMethod,\nSupplierLocation.EmailAddress as EmailAddress,\nSupplierLocation.AribaNetworkId as AribaNetworkId,\nthis\nFROM ariba.purchasing.core.PurchaseOrder\nWHERE UniqueName IN ({{uniqueNamesList}})\nORDER BY StatusString, UniqueName, TimeCreated, Recipients.OrderingMethod",
-      
       "emailTemplates": {
         "toCustomer": {
           "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - POs in status = Ordering",
@@ -32,7 +29,6 @@
         }
       }
     },
-    
     "RC_Processing": {
       "displayName": "RC Processing",
       "description": "Receipts stuck in Processing status",
@@ -40,9 +36,7 @@
       "idField": "UniqueName",
       "typeLabel": "RC",
       "hasQuery": true,
-      
       "queryTemplate": "SELECT DISTINCT UniqueName as \"Id\",\nUniqueName,\nStatusString,\nCreateDate,\nApprovedDate,\n'Awaiting processing' ProcessedStateString\nFROM ariba.receiving.core.Receipt\nWHERE StatusString = 'Approved'\nAND ProcessedState = 1\nAND UniqueName IN ({{uniqueNamesList}})\nORDER BY ApprovedDate DESC",
-      
       "emailTemplates": {
         "toCustomer": {
           "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - RCs in Processing Status = Processing",
@@ -62,7 +56,6 @@
         }
       }
     },
-    
     "CLID_Request_Error": {
       "displayName": "CLID Request Error",
       "description": "Contract Workspaces with CLID request errors",
@@ -70,9 +63,7 @@
       "idField": "UniqueName",
       "typeLabel": "CLID",
       "hasQuery": false,
-      
       "queryTemplate": "",
-      
       "emailTemplates": {
         "toCustomer": {
           "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - CLID Request Error",
@@ -92,7 +83,6 @@
         }
       }
     },
-    
     "PAY_Sending": {
       "displayName": "PAY Sending",
       "description": "Payments stuck in Sending status",
@@ -100,9 +90,7 @@
       "idField": "UniqueName",
       "typeLabel": "PAY",
       "hasQuery": false,
-      
       "queryTemplate": "",
-      
       "emailTemplates": {
         "toCustomer": {
           "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Payments in status Sending",
@@ -122,7 +110,6 @@
         }
       }
     },
-    
     "CR_Sourcing_Confirming": {
       "displayName": "CR Sourcing Confirming",
       "description": "Contract Requests stuck in Sourcing Confirming status",
@@ -130,9 +117,7 @@
       "idField": "UniqueName",
       "typeLabel": "CR",
       "hasQuery": true,
-      
       "queryTemplate": "SELECT\nUniqueName,\nStatusString,\nTimeCreated,\nTimeUpdated,\n\"Active\" \"Active\",\nthis\nFROM ContractRequest INCLUDE INACTIVE\nWHERE UniqueName IN ({{uniqueNamesList}})\nORDER BY TimeCreated",
-      
       "emailTemplates": {
         "toCustomer": {
           "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - CR in status Sourcing Confirming",
@@ -152,7 +137,6 @@
         }
       }
     },
-    
     "Stuck_Process_Flow_Projects": {
       "displayName": "Stuck Process Flow Projects",
       "description": "SM Process Flow Projects stuck in In Process status",
@@ -160,9 +144,7 @@
       "idField": "InternalId",
       "typeLabel": "PFP",
       "hasQuery": true,
-      
       "queryTemplate": "SELECT DISTINCT\nInternalId AS \"Id\",\nInternalId,\nTitle,\nProcessFlowStatus,\nProjectAddin.Plan.EndDateTime AS \"Plan End Date\",\nProjectAddin.Plan.Status AS \"Plan Status\"\nFROM ariba.sourcing.content.SMProcessFlowProject\nWHERE ProcessFlowStatus NOT IN ('ConditionallyApproved','PendingDecision','Approved','Denied','Cancelled')\nAND InternalId IN ({{uniqueNamesList}})\nORDER BY InternalId",
-      
       "emailTemplates": {
         "toCustomer": {
           "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - SM Process Projects in status In Process",
@@ -182,7 +164,6 @@
         }
       }
     },
-    
     "Req_Approved_No_PO": {
       "displayName": "Req Approved No PO",
       "description": "Requisitions in Approved status without PO",
@@ -190,9 +171,7 @@
       "idField": "UniqueName",
       "typeLabel": "PR",
       "hasQuery": false,
-      
       "queryTemplate": "",
-      
       "emailTemplates": {
         "toCustomer": {
           "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Requisition in status Approved with no PO",
@@ -212,37 +191,41 @@
         }
       }
     },
-    
     "Appr_Sbmtd_No_ActAppr": {
       "displayName": "Appr Sbmtd No ActAppr",
       "description": "Approvables in Submitted status with no active approvers",
-      "statusColor": "warning",
-      "idField": "UniqueName",
       "typeLabel": "APPR",
+      "idField": "UniqueName",
+      "statusColor": "warning",
       "hasQuery": false,
-      
       "queryTemplate": "",
-      
+      "daySummary": {
+        "enabled": false,
+        "interval": "daily",
+        "batchGap": 1,
+        "dateColumn": "",
+        "objectDescription": "",
+        "summaryQuery": ""
+      },
       "emailTemplates": {
         "toCustomer": {
-          "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Approvable object in status Submitted with no active",
+          "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Approvable object in status Submitted with no active approver",
           "body": "Hello Team,\n\nour proactive monitoring queries identified several Approvable Objects in status Submitted without any active approvers in the Approval Flow.\n\nYou can find the list of the Approvables in the attached Excel file.\n\n<Insert your investigation of the issue here>\n\nIf you need additional assistance with the above occurrences, you are welcome to submit a support case with SAP Ariba.\n\n{{itsmRef}}"
         },
         "toPS": {
-          "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Approvable object in status Submitted with no active",
+          "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Approvable object in status Submitted with no active approver",
           "body": "Hello {{firstName}},\n\nour proactive monitoring queries identified several Approvable Objects in status Submitted without any active approvers in the Approval Flow.\n\nYou can find the list of the Approvables in the attached Excel file.\n\n<Insert your investigation of the issue here>\n\nPlease notify the customer about the occurrence. If they need additional assistance with the above occurrences, they are welcome to submit a support case with SAP Ariba.\n\n{{itsmRef}}"
         },
         "toCustomerSingle": {
-          "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Approvable object in status Submitted with no active",
+          "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Approvable object in status Submitted with no active approver",
           "body": "Hello Team,\n\nour proactive monitoring queries identified {{uniqueName}} in status Submitted without any active approvers in the Approval Flow.\n\n<Insert your investigation of the issue here>\n\nIf you need additional assistance with the above occurrences, you are welcome to submit a support case with SAP Ariba.\n\n{{itsmRef}}"
         },
         "toPSSingle": {
-          "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Approvable object in status Submitted with no active",
+          "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Approvable object in status Submitted with no active approver",
           "body": "Hello {{firstName}},\n\nour proactive monitoring queries identified {{uniqueName}} in status Submitted without any active approvers in the Approval Flow.\n\n<Insert your investigation of the issue here>\n\nPlease notify the customer about the occurrence. If they need additional assistance with the above occurrences, they are welcome to submit a support case with SAP Ariba.\n\n{{itsmRef}}"
         }
       }
     },
-    
     "OK2Pay_Empty_Export": {
       "displayName": "OK2Pay Empty Export",
       "description": "OK2Pay exports with 0 records",
@@ -250,9 +233,7 @@
       "idField": "UniqueName",
       "typeLabel": "OK2P",
       "hasQuery": true,
-      
       "queryTemplate": "SELECT UniqueName AS \"Id\",\nUniqueName,\nStartRunDate,\nEndRunDate,\nAdapterName,\nCurrentTime() AS \"QueryDate\"\nFROM ariba.integration.core.IntegrationEventLog\nWHERE AdapterName LIKE '%PaymentExport_CSV'\nAND RecordsExported = 0\nAND (\n  (CurrentTime() - StartRunDate) <= 1 OR\n  (CurrentTime() - EndRunDate) <= 1\n)\nOrder by 3 desc",
-      
       "emailTemplates": {
         "toCustomer": {
           "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - OK2Pay Empty Export",
@@ -272,7 +253,6 @@
         }
       }
     },
-    
     "Ext_Tax_Failure": {
       "displayName": "Ext Tax Failure",
       "description": "IRs in Awaiting Tax Engine Confirmation status",
@@ -280,9 +260,7 @@
       "idField": "UniqueName",
       "typeLabel": "IR",
       "hasQuery": true,
-      
       "queryTemplate": "SELECT\nUniqueName,\nStatusString,\nTimeCreated,\nTimeUpdated,\nthis\nFROM InvoiceReconciliation\nWHERE UniqueName IN ({{uniqueNamesList}})\nORDER BY TimeCreated",
-      
       "emailTemplates": {
         "toCustomer": {
           "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - External Tax Engine Failure",
@@ -302,7 +280,6 @@
         }
       }
     },
-    
     "INV_Approved": {
       "displayName": "INV Approved",
       "description": "Invoices stuck in Approved status",
@@ -310,9 +287,7 @@
       "idField": "UniqueName",
       "typeLabel": "INV",
       "hasQuery": false,
-      
       "queryTemplate": "",
-      
       "emailTemplates": {
         "toCustomer": {
           "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Invoice in status Approved",
@@ -329,6 +304,41 @@
         "toPSSingle": {
           "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Invoice in status Approved",
           "body": "Hello {{firstName}},\n\nour proactive monitoring queries found one invoice in status Approved: {{uniqueName}}\n\nInsert your investigation !!!!!!!!!!!!!!!\n\nThe invoice requires additional technical investigation beyond the scope of proactive monitoring.\n\nPlease notify the customer about the occurrence. If they need additional assistance with the above, they are welcome to submit a support case with SAP Ariba.\n\n{{itsmRef}}"
+        }
+      }
+    },
+    "Deactivated_Users": {
+      "displayName": "Deactivated Users",
+      "description": "Deactivated Users",
+      "typeLabel": "DEUSERS",
+      "idField": "UniqueName",
+      "statusColor": "warning",
+      "hasQuery": true,
+      "queryTemplate": "SELECT DISTINCT ielh, ielh.AdapterName, st.Operation, st.EventName, st.Position stPos, con.Filename,\n  ielh.StartRunDate, ielh.EndRunDate, (ielh.EndRunDate-ielh.StartRunDate)*24*60 DurMin, \n  ielh.RecordsCreated Cr,  ielh.RecordsUpdated Upd, ielh.RecordsDeleted  Del, ielh.Status,\n  CASE ielh.ClientType WHEN NULL THEN 'manual (' || u.EmailAddress || ')' ELSE 'integrated ('|| ielh.ClientType ||')' END LoadedVia,\n  st.RecordsCreated stCr, st.RecordsUpdated stUpd, st.RecordsDeleted   stDel\nFROM IntegrationEventLogHistory ielh\nLEFT OUTER JOIN MultiIntegrationEventLogDetails det USING Details\nLEFT OUTER JOIN DataImportContent con USING det.Contents\nLEFT OUTER JOIN DataImportStatus st USING det.StatusDetails\nLEFT OUTER JOIN ariba.user.core.User u ON BaseId(RequestingUserId) = u\nWHERE (\n   (ielh.AdapterName LIKE '%Combi%' \n    AND (st.EventName LIKE '%UserCons%' OR st.EventName LIKE 'SharedUserPull') \n    AND con.Filename LIKE '%'||CASE st.Operation WHEN 'Delete' THEN '_Delete.csv' ELSE '.csv' END )\n  OR ielh.AdapterName LIKE '%UserConsolidated_CSV' OR ielh.AdapterName LIKE '%SharedUser_CSV')\n  AND (con.Filename IS NULL OR con.Filename=Substring(st.EventName, 1, Length(st.EventName)-4)||CASE st.Operation WHEN 'Delete' THEN '_Delete.csv' ELSE '.csv' END)\n  AND (\n    {{batchQuery}}\n  )\nORDER BY StartRunDate DESC, ielh, st, con",
+      "daySummary": {
+        "enabled": true,
+        "interval": "batch",
+        "batchGap": 10,
+        "dateColumn": "TimeUpdated",
+        "objectDescription": "Users deleted",
+        "summaryQuery": "Date('{{AQLdateStart}}')-StartRunDate>=-(15+{{gap}}+1)/24/60 AND Date('{{AQLdateEnd}}')-EndRunDate<=(15+10)/24/60"
+      },
+      "emailTemplates": {
+        "toCustomer": {
+          "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Deactivated Users",
+          "body": "Hello Team,\n\nWe received a monitoring notification about the {{recordCount}} deactivated users exceeding threshold of {{Treshold}} (see attached file for details) on %REALMS%.\n\n{{dayByDaySummary}}\n\nAll users were deleted via integrated (DirectConnect) Import Batch Data calling Import User Data (Consolidated File) \nmanual Import User  Data (Consolidated File) event by the user USER on parent realm \nImport Enterprise Users task using file UserConsolidated.csv|SharedUser_Delete.csv \n using Delete load  – so looks ok.\n\nAs you are deleting users by SCIM, I don’t have visibility into deletion details\n\nThe reports on child realms mirror those of a parent realm with a few minute delay due to data sync.\n\nPlease check and confirm this mass delete was intentional/ok.\n\nRegards,\n\n\n{{itsmRef}}"
+        },
+        "toPS": {
+          "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Deactivated Users",
+          "body": "Hello {{firstName}},\n\nWe received a monitoring notification about the {{recordCount}} deactivated users exceeding threshold of {{Treshold}} (see attached file for details) on %REALMS%.\n\n{{dayByDaySummary}}\n\nAll users were deleted via integrated (DirectConnect) Import Batch Data calling Import User Data (Consolidated File) \nmanual Import User  Data (Consolidated File) event by the user USER on parent realm \nImport Enterprise Users task using file UserConsolidated.csv|SharedUser_Delete.csv \n using Delete load  – so looks ok.\n\nAs you are deleting users by SCIM, I don’t have visibility into deletion details\n\nThe reports on child realms mirror those of a parent realm with a few minute delay due to data sync.\n\nPlease check and confirm this mass delete was intentional/ok.\n\nRegards,\n\n\n{{itsmRef}}"
+        },
+        "toCustomerSingle": {
+          "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Deactivated Users",
+          "body": "Hello Team,\n\nWe received a monitoring notification about the {{recordCount}} deactivated users exceeding threshold of {{Treshold}} (see attached file for details) on %REALMS%.\n\n{{dayByDaySummary}}\n\nAll users were deleted via integrated (DirectConnect) Import Batch Data calling Import User Data (Consolidated File) \nmanual Import User  Data (Consolidated File) event by the user USER on parent realm \nImport Enterprise Users task using file UserConsolidated.csv|SharedUser_Delete.csv \n using Delete load  – so looks ok.\n\nAs you are deleting users by SCIM, I don’t have visibility into deletion details\n\nThe reports on child realms mirror those of a parent realm with a few minute delay due to data sync.\n\nPlease check and confirm this mass delete was intentional/ok.\n\nRegards,\n\n\n{{itsmRef}}"
+        },
+        "toPSSingle": {
+          "subject": "{{caseNumber}} PSEE Proactive Monitoring - customer {{customerName}}, realm {{realm}} - Deactivated Users",
+          "body": "Hello {{firstName}},\n\nWe received a monitoring notification about the {{recordCount}} deactivated users exceeding threshold of {{Treshold}} (see attached file for details) on %REALMS%.\n\n{{dayByDaySummary}}\n\nAll users were deleted via integrated (DirectConnect) Import Batch Data calling Import User Data (Consolidated File) \nmanual Import User  Data (Consolidated File) event by the user USER on parent realm \nImport Enterprise Users task using file UserConsolidated.csv|SharedUser_Delete.csv \n using Delete load  – so looks ok.\n\nAs you are deleting users by SCIM, I don’t have visibility into deletion details\n\nThe reports on child realms mirror those of a parent realm with a few minute delay due to data sync.\n\nPlease check and confirm this mass delete was intentional/ok.\n\nRegards,\n\n\n{{itsmRef}}"
         }
       }
     }
