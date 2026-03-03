@@ -2291,10 +2291,23 @@ Daily summary:
                 </button>
             ` : '';
             
+            const realmValue = info.realm || 'N/A';
+            const realmCopyBtn = info.realm ? `
+                <button class="copy-btn-small" id="copyRealmBtn" onclick="copyRealm()" title="Copy realm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                </button>
+            ` : '';
+            
             infoGrid.innerHTML = `
                 <div class="fiori-info-tile">
                     <div class="fiori-info-label">Realm</div>
-                    <div class="fiori-info-value">${info.realm || 'N/A'}</div>
+                    <div class="copyable-field">
+                        <span class="fiori-info-value">${realmValue}</span>
+                        ${realmCopyBtn}
+                    </div>
                 </div>
                 <div class="fiori-info-tile">
                     <div class="fiori-info-label">Product Specialist</div>
@@ -3164,6 +3177,14 @@ ORDER BY ApprovedDate DESC`;
             if (!currentProductSpecialist) return;
             navigator.clipboard.writeText(currentProductSpecialist).then(() => {
                 showCopySuccess('copyPsBtn');
+            });
+        }
+
+        // Copy realm to clipboard
+        function copyRealm() {
+            if (!currentRealm) return;
+            navigator.clipboard.writeText(currentRealm).then(() => {
+                showCopySuccess('copyRealmBtn');
             });
         }
 
